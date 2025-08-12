@@ -2,7 +2,7 @@
 
 # Análise de Relatórios de Impressoras
 
-Este projeto é desenvolvido para automatizar a análise de relatórios semanais em PDF das impressoras **HP 432 MFP** e **Lexmark 415dn**.
+Este projeto é desenvolvido para automatizar a análise de relatórios em PDF das impressoras **HP 432 MFP** e **Lexmark 415dn**.
 Ele identifica automaticamente quais impressoras precisam de **toner** ou **unidade de imagem**, gerando um relatório em texto já no formato pré-programado para solicitação de suprimentos.
 
 ---
