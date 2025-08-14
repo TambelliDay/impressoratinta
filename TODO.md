@@ -2,9 +2,6 @@
 
 ### HP 432
 - [ ] Resolver erro de leitura inválida que ocorreu no OCR.
-- [ ] Separar resultado em duas categorias:
-  - Precisa comprar **Tonner**
-  - Precisa comprar **Unidade de Imagem**
 
 ### Lexmark 415dn
 - [ ] Ler a imagem do relatório corretamente.

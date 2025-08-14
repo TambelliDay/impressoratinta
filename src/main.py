@@ -46,14 +46,22 @@ def processar_pdf(caminho_pdf):
     modelo = detectar_modelo(texto_total)
 
     if modelo == "HP":
-        # Aplica a lógica apenas para HP
+        contador_life = 0  # Conta a ordem de aparição do "Life Remaining"
         for linha in texto_total.splitlines():
             if "Life Remaining" in linha:
+                contador_life += 1
                 match = re.search(r"(\d+)\%", linha)
                 if match:
                     valor = int(match.group(1))
+                    if contador_life == 1:
+                        tipo_peca = "Toner"
+                    elif contador_life == 2:
+                        tipo_peca = "Unidade de Imagem"
+                    else:
+                        tipo_peca = f"Peça #{contador_life}"
+
                     if valor <= 30:
-                        resultado.append(f"⚠ Atenção: '{linha.strip()}' → Comprar peça!")
+                        resultado.append(f"⚠ Atenção: '{linha.strip()}' → Comprar {tipo_peca}!")
                 else:
                     resultado.append(f"❌ Erro na leitura: '{linha.strip()}'")
         if not resultado:
