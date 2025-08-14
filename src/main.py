@@ -27,12 +27,12 @@ def processar_pdf(caminho_pdf):
     resultado = []
 
     # OCR de todas as páginas para um único bloco de texto
-    with PyTessBaseAPI(lang="por", path=TESSDATA_DIR) as tesseract:
+    with PyTessBaseAPI(lang="por+eng", path=TESSDATA_DIR) as tesseract:
         pdf = fitz.open(caminho_pdf)
         texto_total = ""
         for pagina_num in range(len(pdf)):
             pagina = pdf[pagina_num]
-            pix = pagina.get_pixmap(dpi=300)
+            pix = pagina.get_pixmap(dpi=400)
             temp_path = f"temp_pag_{pagina_num+1}.png"
             pix.save(temp_path)
 
