@@ -1,44 +1,104 @@
+# 📄 OCR Printer Analyzer
 
-
-# Análise de Relatórios de Impressoras
-
-Este projeto é desenvolvido para automatizar a análise de relatórios em PDF das impressoras **HP 432 MFP** e **Lexmark 415dn**.
-Ele identifica automaticamente quais impressoras precisam de **toner** ou **unidade de imagem**, gerando um relatório em texto já no formato pré-programado para solicitação de suprimentos.
+Este projeto realiza **processamento de PDFs gerados por impressoras** utilizando **OCR (Tesseract)** e técnicas de **processamento de imagens** com OpenCV.
+Ele identifica o modelo da impressora (HP ou Lexmark) e analisa os relatórios para verificar o nível de toner, unidade de imagem e outros consumíveis, gerando um relatório textual simplificado.
 
 ---
 
-## 🚀 Funcionalidades
+## ⚙️ Funcionalidades
 
-* 📂 Leitura de relatórios **PDF** gerados pelas impressoras.
-* 🔍 Identificação automática de impressoras que precisam de **toner** ou **unidade de imagem**.
+* Detecta automaticamente o modelo da impressora no relatório (`HP Laser MFP 432fdn` ou `Lexmark MS415dn`).
+* Realiza **deskew** (correção de inclinação) em páginas escaneadas usando transformada de Hough.
+* Para relatórios **HP**:
 
----
+  * Extrai valores de **Life Remaining (%)**.
+  * Aponta quando toner ou unidade de imagem estão abaixo de 30%.
+* Para relatórios **Lexmark**:
 
-## 🖨️ Modelos Compatíveis
-
-* **HP 432 MFP**
-* **Lexmark 415dn**
-
----
-
-## 📋 Pré-requisitos
-
-* Python **3.8+**
-* Bibliotecas necessárias:
-
-  ```bash
-  pip install -r requirements.txt
-  ```
+  * Detecta barras de status em “suprimentos”.
+  * Indica se o nível está OK ou baixo (com base em análise de pixels binarizados).
+* Gera um relatório em `.txt` com os resultados.
+* Processa todos os PDFs presentes na pasta `./samples`.
 
 ---
 
-## ⚙️ Como Usar
+## 🛠️ Tecnologias utilizadas
 
-1. Coloque seus PDFs na pasta `samples/`.
-2. Execute o script:
+* [Python 3.x](https://www.python.org/)
+* [PyMuPDF (fitz)](https://pymupdf.readthedocs.io/) – extração de páginas dos PDFs
+* [tesserocr](https://github.com/sirfz/tesserocr) – interface para o Tesseract OCR
+* [OpenCV](https://opencv.org/) – deskew e análise de imagens
+* [NumPy](https://numpy.org/) – operações matriciais
+* [Regex (re)](https://docs.python.org/3/library/re.html) – extração de valores percentuais
 
-   ```bash
-   python src/main.py
-   ```
-3. O relatório final será gerado na pasta `output/`.
+---
 
+## 📂 Estrutura do Projeto
+
+```
+.
+├── samples/        # PDFs de entrada
+├── output/         # Relatórios gerados
+├── main.py         # Código principal
+└── README.md
+```
+
+---
+
+## 🚀 Como usar
+
+### 1. Instale as dependências
+
+```bash
+pip install tesserocr pymupdf opencv-python numpy
+```
+
+⚠️ É necessário ter o [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) instalado na máquina.
+No Windows, configure o caminho da pasta `tessdata` em:
+
+```python
+TESSDATA_DIR = r"C:\Users\SeuUsuario\AppData\Local\Programs\Tesseract-OCR\tessdata"
+```
+
+---
+
+### 2. Coloque os PDFs de relatório na pasta `samples/`
+
+### 3. Execute o script
+
+```bash
+python main.py
+```
+
+### 4. Veja os resultados em `output/`
+
+Cada relatório analisado gera um `.txt` com informações sobre toner e unidades de imagem.
+
+---
+
+## 📊 Exemplo de saída
+
+### HP
+
+```
+⚠ Atenção: 'Toner Life Remaining: 25%' → Comprar Toner!
+✅ Unidade de Imagem em nível aceitável
+```
+
+### Lexmark
+
+```
+✅ Toner em nível ok
+⚠ Atenção: Unidade de Imagem com nível baixo (barra preta detectada)
+```
+
+---
+
+## 📌 Possíveis melhorias
+
+* Suporte a novos modelos de impressoras.
+* Exportar resultados em formato **JSON** para integração com APIs.
+* Interface gráfica simples (PyQt/Tkinter).
+* Deploy como serviço web (Flask/FastAPI).
+
+---

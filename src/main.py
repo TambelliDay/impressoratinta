@@ -1,4 +1,4 @@
-from tesserocr import PyTessBaseAPI
+from tesserocr import PyTessBaseAPI, RIL
 import fitz  # PyMuPDF
 import os
 import re
@@ -34,6 +34,57 @@ def rotate_bound(image, angle):
     M[0, 2] += (nW / 2) - cX
     M[1, 2] += (nH / 2) - cY
     return cv2.warpAffine(image, M, (nW, nH), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+
+def analisar_lexmark(tesseract, temp_path_proc):
+    img = cv2.imread(temp_path_proc, cv2.IMREAD_GRAYSCALE)
+    _, thresh = cv2.threshold(img, 180, 255, cv2.THRESH_BINARY)  # binarização
+
+    resultados = []
+    offset_x = 150  # ajuste por tentativa
+    ri = tesseract.GetIterator()
+    contador = 0
+
+    while ri:
+        word = ri.GetUTF8Text(RIL.WORD)
+        if word and "supr" in word.lower():
+            contador += 1
+            x1, y1, x2, y2 = ri.BoundingBox(RIL.WORD)
+            y_centro = (y1 + y2) // 2
+            x_teste = min(x2 + offset_x, img.shape[1] - 1)
+            valor_pixel = thresh[y_centro, x_teste]
+
+            if contador == 1:
+                tipo = "Toner"
+            elif contador == 2:
+                tipo = "Unidade de Imagem"
+
+            if valor_pixel < 128:
+                resultados.append(f"⚠ Atenção: {tipo} com nível baixo (barra preta detectada)")
+            else:
+                resultados.append(f"✅ {tipo} em nível ok")
+
+        if not ri.Next(RIL.WORD):
+            break
+
+    if not resultados:
+        resultados.append("❌ Nenhum 'supr.' detectado para Lexmark.")
+
+    return resultados
+
+
+def iterate_level(ri, level):
+    # helper generator para iterar no Tesseract
+    ri.Begin()
+    while True:
+        word = ri.GetUTF8Text(level)
+        if not word:
+            if not ri.Next(level):
+                break
+            continue
+        yield ri
+        if not ri.Next(level):
+            break
+
 
 def deskew_hough(caminho_img, canny1=50, canny2=200, max_skew=30):
     img = cv2.imread(caminho_img)
@@ -112,15 +163,15 @@ def processar_pdf(caminho_pdf):
                                 resultado.append(f"⚠ Atenção: '{linha.strip()}' → Comprar {tipo_peca}!")
                         else:
                             resultado.append(f"❌ Erro na leitura: '{linha.strip()}'")
+            if modelo == "Lexmark":
+                resultados_lex = analisar_lexmark(tesseract, temp_path_proc)
+                resultado.extend(resultados_lex)
 
             os.remove(temp_path)
             os.remove(temp_path_proc)
 
         pdf.close()
-
-    if modelo == "Lexmark":
-        resultado.append("ℹ Modelo Lexmark MS415dn detectado — nenhuma lógica aplicada.")
-    elif not modelo:
+    if not modelo:
         resultado.append("ℹ Nenhum dos modelos alvo detectado — nenhuma lógica aplicada.")
     elif modelo == "HP" and not resultado:
         resultado.append("✅ Nenhum problema encontrado para HP.")
