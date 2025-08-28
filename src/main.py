@@ -57,6 +57,8 @@ def analisar_lexmark(tesseract, temp_path_proc):
                 tipo = "Toner"
             elif contador == 2:
                 tipo = "Unidade de Imagem"
+            else:
+                tipo = f"Suprimento #{contador}"
 
             if valor_pixel < 128:
                 resultados.append(f"⚠ Atenção: {tipo} com nível baixo (barra preta detectada)")
@@ -70,21 +72,6 @@ def analisar_lexmark(tesseract, temp_path_proc):
         resultados.append("❌ Nenhum 'supr.' detectado para Lexmark.")
 
     return resultados
-
-
-def iterate_level(ri, level):
-    # helper generator para iterar no Tesseract
-    ri.Begin()
-    while True:
-        word = ri.GetUTF8Text(level)
-        if not word:
-            if not ri.Next(level):
-                break
-            continue
-        yield ri
-        if not ri.Next(level):
-            break
-
 
 def deskew_hough(caminho_img, canny1=50, canny2=200, max_skew=30):
     img = cv2.imread(caminho_img)
@@ -176,16 +163,23 @@ def processar_pdf(caminho_pdf):
     elif modelo == "HP" and not resultado:
         resultado.append("✅ Nenhum problema encontrado para HP.")
 
-    caminho_saida = os.path.join(PASTA_OUTPUT, f"{nome_arquivo}.txt")
-    with open(caminho_saida, "w", encoding="utf-8") as f:
-        f.write("\n".join(resultado))
+    return nome_arquivo, modelo, resultado
 
-    print(f"📄 Processado: {nome_arquivo} → Resultado salvo em {caminho_saida} | Modelo: {modelo}")
 
-# Processar todos os PDFs na pasta
+# Processar todos os PDFs na pasta e salvar em UM TXT
 pdfs = [f for f in os.listdir(PASTA_INPUT) if f.lower().endswith(".pdf")]
+saida_final = []
+
 if not pdfs:
     print("❌ Nenhum PDF encontrado na pasta samples.")
 else:
     for pdf in pdfs:
-        processar_pdf(os.path.join(PASTA_INPUT, pdf))
+        nome_arquivo, modelo, resultado = processar_pdf(os.path.join(PASTA_INPUT, pdf))
+        saida_final.append(f"\n=== Resultado para {nome_arquivo} (Modelo: {modelo}) ===\n")
+        saida_final.extend(resultado)
+
+    caminho_saida = os.path.join(PASTA_OUTPUT, "resultado.txt")
+    with open(caminho_saida, "w", encoding="utf-8") as f:
+        f.write("\n".join(saida_final))
+
+    print(f"📄 Todos os PDFs foram processados → Resultado salvo em {caminho_saida}")
